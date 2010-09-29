@@ -92,6 +92,7 @@
          (html
           (minib-layout
            classname
+           nil
            (class/render cls (normalize-options query-params) cls))))))
 
 (defroutes var-routes
@@ -104,7 +105,7 @@
      (html
       (minib-layout
        qname
-        nil
+       nil
        (if var
          (data/render (find-var (symbol qname)) (normalize-options query-params))
          (namespace/var-browser ns)))))))
