@@ -16,11 +16,12 @@
    [mycroft.class :as class]
    [mycroft.namespace :as namespace]
    [mycroft.docs :as docs]
+   [mycroft.search :as search]
    [mycroft.history :as history]
    [clojure.string :as str]
    [mycroft.examples :as examples]))
 
-(defn minib-layout [title & body]
+(defn- minib-layout [title query & body] 
   (html
     [:head
      [:title title]
@@ -33,7 +34,14 @@
                  "/javascripts/shCore.js"
                  "/javascripts/shBrushClojure.js")]
     [:body {:id "browser"}
-     [:h2 {:class "logo"} [:a {:href "/" :class "home"} "Home"] [:a {:href "/index.html"} "Mycroft, a Clojure inspector"]]
+     [:h2 {:class "logo"} 
+      [:span {:class "search"}
+        [:form {:method "GET" :action "/search"}
+         [:input {:type "text", :name "query", :value query }] 
+         [:input {:type "hidden", :name "mode", :value "with-doc"}]
+         [:input {:type "submit" :value "Search"}]]]
+      [:a {:href "/" :class "home"} "Home"]
+      [:a {:href "/index.html"} "Mycroft, a Clojure inspector"]]
      [:div {:id "content"}
       body]
      [:div {:id "footer"}
@@ -73,6 +81,7 @@
        (html
         (minib-layout
          "Namespaces"
+          nil
          (namespace/browser)))))
 
 (defroutes class-routes
@@ -95,12 +104,27 @@
      (html
       (minib-layout
        qname
+        nil
        (if var
          (data/render (find-var (symbol qname)) (normalize-options query-params))
          (namespace/var-browser ns)))))))
 
+(defn- redirect-to
+  [a-var] 
+  (let [ns (-> a-var meta :ns str) 
+        v  (java.net.URLEncoder/encode (-> a-var meta :name str))]
+    (redirect (str "/vars/" ns "/" v))))
+
+(defroutes search-route
+  (GET "/search" {{:strs [query mode]} :params}
+    (let [vars (search/search query mode)] 
+      (if (= (count vars) 1) 
+        (redirect-to (first vars)) 
+        (minib-layout "Search" query (search/search-layout query vars))))))
+
 (def dynamic-routes (routes (-> namespace-routes examples/with-recent-history)
                             var-routes
+                            search-route
                             class-routes))
 
 (defroutes static-routes

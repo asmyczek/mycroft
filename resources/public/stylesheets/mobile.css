@@ -157,7 +157,19 @@ h2.logo a.home {
   border: 1px solid #aaa;
   border-radius: 4px;
   font-size: 12px;
-  padding: 5px;
+  padding: 4px;
+}
+
+h2.logo span.search {
+  position: absolute;
+  top: 5px;
+  right: 60px;
+  padding: 0px 5px;
+}
+
+
+.hls {
+  background: #ff4;
 }
 
 table.data               {font-family: Lucida Grande, Arial; font-size: 8pt; border-collapse: collapse; margin: 10px;}
