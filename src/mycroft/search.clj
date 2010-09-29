@@ -6,7 +6,7 @@
   (:import [java.util.regex Pattern]))
 
 (defn- find-vars 
-  "'find-doc' rip off for now.
+  "'find-doc' rip-off for now.
   If in-doc is true, search in doc string as well."
   ([query]      (find-vars query true))
   ([query in-doc] 
@@ -29,7 +29,7 @@
       vars)))
 
 (defn search 
-  "Main search entry point. Returns a list of matched vars."
+  "Main search entry point. Returns a list of matching vars."
   [query mode]
   (case mode
     "is"      (is query)
@@ -57,7 +57,7 @@
     [:div
       [:p "Search results for '" [:b query] "' in "
        [:span {:class "buttons"} 
-        [:a {:href (str "/search?mode=no-doc&query=" query)} "Name only"]
+        [:a {:href (str "/search?mode=no-doc&query=" query)} "Names"]
         [:a {:href (str "/search?mode=with-doc&query=" query)} "Documentation"]]]
       [:p [:ul (map #(render-namespace % query) ns-groups)]]]))
 

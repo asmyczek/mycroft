@@ -167,11 +167,6 @@ h2.logo span.search {
   padding: 0px 5px;
 }
 
-
-.hls {
-  background: #ff4;
-}
-
 table.data               {font-family: Lucida Grande, Arial; font-size: 8pt; border-collapse: collapse; margin: 10px;}
 table.data tr td         {vertical-align: top; padding-left: 3px; padding-top: 3px;}
 table.data td            {border: solid 1px gray; padding: 5px;}
