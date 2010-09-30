@@ -1,42 +1,52 @@
 (ns mycroft.search
   (:require [clojure.contrib [str-utils :as utils]]
             [mycroft.breadcrumb :as breadcrumb]
+            [mycroft.namespace :as nspc]
             [mycroft.docs :as docs]
-            [ring.util.response :as resp])
-  (:import [java.util.regex Pattern]))
+            [ring.util.response :as resp]))
 
 (defn- find-vars 
-  "'find-doc' rip-off for now.
-  If in-doc is true, search in doc string as well."
-  ([query]      (find-vars query true))
-  ([query in-doc] 
-   (let [re  (re-pattern query)] 
-     (for [ns (all-ns) 
-           v (sort-by (comp :name meta) (vals (ns-interns ns))) 
-           :when (and (:doc (meta v)) 
-                      (or (re-find (re-matcher re (str (:name (meta v))))) 
-                          (and in-doc (re-find (re-matcher re (:doc (meta v)))))))]
-       v))))
+  "Find vars for matching regex pattern and condition functions.
+  'cond' takes the var as arguments and returns true or false."
+  ([cond] 
+   (for [ns (nspc/namespaces) 
+         vs (nspc/vars (str ns)) 
+         :when (cond vs)]
+     vs)))
 
-(defn- is
-  "Search for exact name."
-  [query] 
-  (let [vars (for [ns (all-ns) 
-               v (sort-by (comp :name meta) (vals (ns-interns ns))) 
-               :when (= query (-> v meta :name str))] v)]
-    (if (empty? vars)
-      (find-vars query false) 
-      vars)))
+(defn- matches
+  "Condition function that matches patter in var name or documentation."
+  [pattern in-doc]
+  (fn [var]
+    (let [name (-> var meta :name str)
+          doc  (-> var meta :doc)] 
+      (or (re-find (re-matcher pattern name)) 
+          (and in-doc doc (re-find (re-matcher pattern doc)))))))
+
+(defn- name-is
+  [query]
+  (find-vars #(= query (-> % meta :name str))))
+
+(defn- name-contains
+  [pattern]
+  (find-vars (matches pattern false)))
+
+(defn- var-contains
+  [pattern]
+  (find-vars (matches pattern true)))
 
 (defn search 
   "Main search entry point. Returns a list of matching vars."
   [query mode]
-  (if (empty? query)
-    {}
-    (case mode
-      "is"      (is query)
-      "no-doc"  (find-vars query false)
-      (find-vars query))))
+  (if (empty? query) {}
+    (let [pattern (re-pattern query)]
+      (case mode
+        "is"      (let [vars (name-is query)] 
+                    (if (empty? vars) 
+                      (name-contains pattern) 
+                      vars))
+        "no-doc"  (name-contains pattern)
+        (var-contains pattern)))))
 
 (def #^{:private true}
   hl-list 
