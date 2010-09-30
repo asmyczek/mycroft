@@ -49,10 +49,11 @@
    (.getName c)))
 
 (defn link-to
-  [o]
-  (if-let [url (url-for o)]
-    [:a {:href url} (link-name o)]
-    (escape-html (link-name o))))
+  ([o] (link-to o identity))
+  ([o render] 
+   (if-let [url (url-for o)] 
+     [:a {:href url} (render (link-name o))] 
+     (escape-html (render (link-name o))))))
 
 (defn top-link
   []

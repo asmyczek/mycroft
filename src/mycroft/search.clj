@@ -1,5 +1,5 @@
 (ns mycroft.search
-  (:require [clojure.contrib [str-utils2 :as utils]]
+  (:require [clojure.contrib [str-utils :as utils]]
             [mycroft.breadcrumb :as breadcrumb]
             [mycroft.docs :as docs]
             [ring.util.response :as resp])
@@ -31,24 +31,40 @@
 (defn search 
   "Main search entry point. Returns a list of matching vars."
   [query mode]
-  (case mode
-    "is"      (is query)
-    "no-doc"  (find-vars query false)
-    (find-vars query)))
+  (if (empty? query)
+    {}
+    (case mode
+      "is"      (is query)
+      "no-doc"  (find-vars query false)
+      (find-vars query))))
+
+(def #^{:private true}
+  hl-list 
+  (apply concat (repeat ["<span class=\"hlsearch\">" "</span>"])))
+
+(defn- hl-search
+  "Highlight search string."
+  [pattern text]
+  (let [mtc (re-matcher pattern text)]
+    (if (. mtc find)
+      (let [fpos (. mtc start)
+            pseq (utils/re-partition pattern text)]
+        (apply str (interleave pseq hl-list)))
+      text)))
 
 (defn- render-var 
   "Render var including documentation."
-  [ns v query] 
+  [ns v pattern] 
   [:li 
-   (breadcrumb/link-to v)
-   [:pre (docs/doc-string v)]])
+   (breadcrumb/link-to v #(hl-search pattern (str %)))
+   [:pre (hl-search pattern (docs/doc-string v))]])
 
 (defn- render-namespace
   "Render namespace."
-  [[ns vars] query]
+  [[ns vars] pattern]
   [:li 
-   [:div (breadcrumb/link-to ns)]
-   [:ul (map #(render-var ns % query) vars)]])
+   [:div (breadcrumb/link-to ns #(hl-search pattern (str %)))]
+   [:ul (map #(render-var ns % pattern) vars)]])
 
 (defn search-layout
   "Search page layout."
@@ -59,5 +75,5 @@
        [:span {:class "buttons"} 
         [:a {:href (str "/search?mode=no-doc&query=" query)} "Names"]
         [:a {:href (str "/search?mode=with-doc&query=" query)} "Documentation"]]]
-      [:p [:ul (map #(render-namespace % query) ns-groups)]]]))
+      [:p [:ul (map #(render-namespace % (re-pattern query)) ns-groups)]]]))
 
