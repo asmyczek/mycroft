@@ -9,9 +9,7 @@
   "Find vars for matching regex pattern and condition functions.
   'cond' takes the var as arguments and returns true or false."
   ([cond] 
-   (for [ns (nspc/namespaces) 
-         vs (nspc/vars (str ns)) 
-         :when (cond vs)]
+   (for [ns (nspc/namespaces) vs (nspc/vars (str ns)) :when (cond vs)]
      vs)))
 
 (defn- matches
@@ -76,10 +74,17 @@
    [:div (breadcrumb/link-to ns #(hl-search pattern (str %)))]
    [:ul (map #(render-var ns % pattern) vars)]])
 
+(defn- group-by-ns
+  "Group vars by namespace."
+  [vars] 
+  (sort-by 
+    (comp str val) 
+    (group-by (fn [v] (-> v meta :ns)) vars)))
+
 (defn search-layout
   "Search page layout."
   [query results] 
-  (let [ns-groups (group-by (fn [v] (-> v meta :ns)) results)] 
+  (let [ns-groups (group-by-ns results)]
     [:div
       [:p "Search results for '" [:b query] "' in "
        [:span {:class "buttons"} 
