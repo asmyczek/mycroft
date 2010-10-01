@@ -5,8 +5,8 @@ $(function() {
     $(this).parents('.toggle').children().toggle();
   });
 
-  link('code.clojure.functions');
-  link('code.clojure.preprocessor');
+  link('code.functions');
+  link('code.preprocessor');
 });
 
 /**
